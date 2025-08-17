@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "innerverse-d4e8d"
+  },
+  "targets": {
+    "innerverse-d4e8d": {
+      "hosting": {
+        "infracomposer": [
+          "infracomposer"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
