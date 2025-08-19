@@ -85,12 +85,51 @@ export default function App() {
   const [integrationType, setIntegrationType] = useState('standalone');
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [collapseState, setCollapseState] = useState({});
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Refs for keyboard navigation
+  const workspaceRefs = useRef([]);
+
+  // Keyboard navigation effect
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Handle Escape key to close panels
+      if (e.key === 'Escape') {
+        if (message) {
+          closeMessage();
+        } else if (selectedProject) {
+          setSelectedProject(null);
+        }
+      }
+
+      // Handle arrow keys for navigation in the workspace
+      const focusedElement = document.activeElement;
+      if (focusedElement && focusedElement.classList.contains('project-card')) {
+        const index = workspaceRefs.current.findIndex(ref => ref === focusedElement);
+        if (index === -1) return;
+
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+          const nextIndex = (index + 1) % workspaceProjects.length;
+          workspaceRefs.current[nextIndex]?.focus();
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          const prevIndex = (index - 1 + workspaceProjects.length) % workspaceProjects.length;
+          workspaceRefs.current[prevIndex]?.focus();
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          const project = workspaceProjects[index];
+          if (project) {
+            setSelectedProject(project);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [workspaceProjects, selectedProject, message]);
+
 
   // Initialize Firebase and set up auth listener
-// Inside your Composer.jsx file
-
-// Inside your Composer.jsx file
-
   useEffect(() => {
     // Load projects from local storage on mount
     const savedProjects = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -558,6 +597,14 @@ ${csdmSection}
 
   const fileTreeData = selectedProject ? generateStructuredFileTree(selectedProject) : [];
 
+  const filteredData = Object.keys(projectData).reduce((acc, category) => {
+    acc[category] = projectData[category].filter(project => 
+      project.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      project.tip.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    return acc;
+  }, {});
+
   return (
     <div className={`flex flex-col h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'} font-inter`}>
       <header className={`p-6 flex justify-between items-center ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-200 border-gray-300'} border-b`}>
@@ -603,6 +650,15 @@ ${csdmSection}
               Start New Project
             </button>
           </div>
+          <div className="mt-4">
+            <input
+              type="text"
+              placeholder="Search projects..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={`w-full p-2 rounded-md border ${isDarkMode ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-400 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            />
+          </div>
           <div className="space-y-4 mt-6">
             <div className="flex items-center justify-between">
               <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>CSDM Integration</h3>
@@ -631,11 +687,11 @@ ${csdmSection}
                     </label>
                 </div>
             )}
-            {Object.keys(projectData).map(category => (
+            {Object.keys(filteredData).map(category => (
               <div key={category}>
                 <h3 className={`text-lg font-medium capitalize mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{category}</h3>
                 <div className="grid grid-cols-2 gap-2">
-                  {projectData[category].map(project => (
+                  {filteredData[category].map(project => (
                     <button
                       key={project.id}
                       onClick={() => addProjectToWorkspace(project)}
@@ -712,11 +768,13 @@ ${csdmSection}
                     Drag or click a project from the catalog to get started.
                   </div>
                 ) : (
-                  workspaceProjects.map(project => (
+                  workspaceProjects.map((project, index) => (
                     <div
                       key={project.instanceId}
+                      ref={el => workspaceRefs.current[index] = el}
+                      tabIndex="0"
                       onClick={() => setSelectedProject(project)}
-                      className={`relative p-4 rounded-lg cursor-pointer transition-transform duration-200 ${
+                      className={`project-card relative p-4 rounded-lg cursor-pointer transition-transform duration-200 focus:outline-none focus:ring-4 ${
                         selectedProject?.instanceId === project.instanceId
                           ? `${isDarkMode ? 'bg-blue-600 ring-2 ring-blue-400 scale-105' : 'bg-blue-500 ring-2 ring-blue-300 scale-105'}`
                           : `${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`
