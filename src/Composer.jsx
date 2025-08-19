@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { auth, db } from './firebase.js';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { getAuth, signInWithCustomToken, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signInAnonymously } from 'firebase/auth';
@@ -234,8 +235,9 @@ export default function App() {
   const [message, setMessage] = useState(null);
   const [showHowToUseModal, setShowHowToUseModal] = useState(false);
   const [progress, setProgress] = useState({});
-  const [db, setDb] = useState(null);
-  const [auth, setAuth] = useState(null);
+  // Now auth and db are imported, no need for setDb/setAuth from useState for them
+  //const [db, setDb] = useState(null);
+  //const [auth, setAuth] = useState(null);
   const [user, setUser] = useState(null);
   const [userId, setUserId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -249,56 +251,58 @@ export default function App() {
 
 // Inside your Composer.jsx file
 
-useEffect(() => {
-    try {
-        // Construct the Firebase config from environment variables
-        const firebaseConfig = {
-            apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-            authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-            projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-            storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-            messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-            appId: import.meta.env.VITE_FIREBASE_APP_ID,
-        };
+  useEffect(() => {
 
-        if (!firebaseConfig.apiKey) {
-            console.error("Firebase config is missing or invalid.");
-            setIsLoading(false);
-            return;
-        }
+        // Only the auth state change listener and user-related state management remains
 
-        const app = initializeApp(firebaseConfig);
-        const firestoreDb = getFirestore(app);
-        const firebaseAuth = getAuth(app);
-        setDb(firestoreDb);
-        setAuth(firebaseAuth);
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
 
-        const unsubscribe = onAuthStateChanged(firebaseAuth, async (currentUser) => {
             if (currentUser) {
-                setUser(currentUser);
-                setUserId(currentUser.uid);
-                loadProjects(firestoreDb, currentUser.uid);
-            } else {
-                try {
-                    const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                    if (token) {
-                        await signInWithCustomToken(firebaseAuth, token);
-                    } else {
-                        await signInAnonymously(firebaseAuth);
-                    }
-                } catch (error) {
-                    console.error("Authentication failed:", error);
-                }
-            }
-            setIsLoading(false);
-        });
-        return () => unsubscribe();
-    } catch (error) {
-        console.error("Firebase initialization error:", error);
-        setIsLoading(false);
-    }
-}, []);
 
+                setUser(currentUser);
+
+                setUserId(currentUser.uid);
+
+                // loadProjects(db, currentUser.uid); // Pass 'db' if needed
+
+            } else {
+
+                // This logic might be better handled in a global auth context or hook
+
+                // if it's truly meant to sign in all unauthenticated users
+
+                // For now, keep it if it's specific to Composer's initial state
+
+                try {
+
+                    const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+                    if (token) {
+
+                        await signInWithCustomToken(auth, token);
+
+                    } else {
+
+                        await signInAnonymously(auth);
+
+                    }
+
+                } catch (error) {
+
+                    console.error("Authentication failed:", error);
+
+                }
+
+            }
+
+            setIsLoading(false);
+
+        });
+
+        return () => unsubscribe();
+
+    }, []); // Empty dependency array, runs once on mount
+  
   // Function to sign in with Google
   const signInWithGoogle = async () => {
     if (!auth) return;
