@@ -692,15 +692,22 @@ ${csdmSection}
                 <h3 className={`text-lg font-medium capitalize mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{category}</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {filteredData[category].map(project => (
-                    <button
-                      key={project.id}
-                      onClick={() => addProjectToWorkspace(project)}
-                      className={`flex flex-col items-center p-3 text-sm rounded-lg ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} transition-colors duration-200`}
-                      style={{ color: isDarkMode ? 'white' : 'black' }}
+                    <div 
+                      key={project.id} 
+                      className="relative group"
                     >
-                      <span className="text-2xl">{project.icon}</span>
-                      <span className="mt-1 text-center">{project.name}</span>
-                    </button>
+                      <button
+                        onClick={() => addProjectToWorkspace(project)}
+                        className={`flex flex-col items-center p-3 text-sm rounded-lg ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} transition-colors duration-200 w-full h-full`}
+                        style={{ color: isDarkMode ? 'white' : 'black' }}
+                      >
+                        <span className="text-2xl">{project.icon}</span>
+                        <span className="mt-1 text-center">{project.name}</span>
+                      </button>
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-48 text-center text-sm text-white bg-gray-800 p-2 rounded-md shadow-lg z-10">
+                        {project.tip}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
