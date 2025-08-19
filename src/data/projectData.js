@@ -150,4 +150,185 @@ export const projectData = {
       }
     },
   ],
+  'cloud-infrastructure': [
+    {
+      id: 'aws-cdk',
+      name: 'AWS CDK',
+      icon: '🪣',
+      structure: 'my-cdk-app/',
+      tip: 'The AWS Cloud Development Kit (CDK) allows you to define your cloud infrastructure in code.',
+      boilerplate: {
+        'package.json': `{ "name": "aws-cdk-app", "dependencies": { "aws-cdk": "^2.10.0" } }`,
+        'lib/my-stack.ts': `import * as cdk from 'aws-cdk-lib';\nimport { Construct } from 'constructs';\n\nexport class MyStack extends cdk.Stack { constructor(scope: Construct, id: string, props?: cdk.StackProps) { super(scope, id, props); } }`,
+      }
+    },
+    {
+      id: 'terraform-pulumi',
+      name: 'Terraform & Pulumi',
+      icon: '🪣',
+      structure: 'my-infra/',
+      tip: 'Terraform and Pulumi are both Infrastructure as Code (IaC) tools used to manage cloud resources.',
+      boilerplate: {
+        'main.tf': `resource "aws_s3_bucket" "example" { bucket = "my-unique-bucket-name" }`,
+        'Pulumi.yaml': `name: my-pulumi-project\nruntime: nodejs`,
+      }
+    },
+    {
+      id: 'docker-only',
+      name: 'Docker-only Project',
+      icon: '🐳',
+      structure: 'my-docker-project/',
+      tip: 'A lightweight Docker project for rapid prototyping and containerization.',
+      boilerplate: {
+        'Dockerfile': `FROM node:18\nWORKDIR /usr/src/app\nCOPY package*.json ./\nRUN npm install\nCOPY . .\nCMD ["npm", "start"]`,
+      }
+    },
+    {
+      id: 'aws-serverless',
+      name: 'AWS Serverless',
+      icon: '☁️',
+      structure: 'my-serverless-app/',
+      tip: 'A serverless API with AWS Lambda and API Gateway.',
+      boilerplate: {
+        'template.yaml': `AWSTemplateFormatVersion: '2010-09-09'\nTransform: AWS::Serverless-2016-10-31\nResources:\n  MyApiFunction:\n    Type: AWS::Serverless::Function`,
+        'src/handler.js': `exports.handler = async (event) => { return { statusCode: 200, body: JSON.stringify('Hello from Lambda!') }; };`,
+      }
+    },
+  ],
+  'emerging-tech': [
+    {
+      id: 'ai-ml',
+      name: 'AI/ML Apps',
+      icon: '🤖',
+      structure: 'my-ai-app/',
+      tip: 'Use Hugging Face, LangChain, or RAG architectures for AI/ML projects.',
+      boilerplate: {
+        'requirements.txt': `langchain\nhuggingface_hub`,
+        'app.py': `from langchain.llms import HuggingFaceHub\nllm = HuggingFaceHub(repo_id="google/flan-t5-xl")\nprint(llm("What is the capital of France?"))`,
+      }
+    },
+    {
+      id: 'edge-computing',
+      name: 'Edge Computing',
+      icon: '🌐',
+      structure: 'my-edge-app/',
+      tip: 'Cloudflare Workers and Deno Deploy are fast platforms for deploying functions at the edge.',
+      boilerplate: {
+        'index.js': `addEventListener('fetch', event => { event.respondWith(handleRequest(event.request)) });\n\nasync function handleRequest(request) { return new Response('Hello, Edge!', { status: 200 }) }`,
+      }
+    },
+    {
+      id: 'wasm',
+      name: 'Rust + WASM',
+      icon: '🦀',
+      structure: 'my-wasm-app/',
+      tip: 'Compile Rust to WebAssembly (WASM) for high-performance web applications.',
+      boilerplate: {
+        'Cargo.toml': `[package]\nname = "my-wasm-app"`,
+        'src/lib.rs': `#[no_mangle]\npub extern "C" fn greet() {\n  println!("Hello, WASM!");\n}`,
+      }
+    },
+    {
+      id: 'web3',
+      name: 'Web3 / Blockchain',
+      icon: '🔗',
+      structure: 'my-web3-app/',
+      tip: 'A decentralized application (dapp) using smart contracts and a web3 library.',
+      boilerplate: {
+        'hardhat.config.js': `require("@nomiclabs/hardhat-waffle");\nmodule.exports = { solidity: "0.8.4", };`,
+        'contracts/MyContract.sol': `// SPDX-License-Identifier: MIT\npragma solidity ^0.8.4;\n\ncontract MyContract { string public greeting = "Hello, Web3!"; }`,
+      }
+    },
+  ],
+  'team-enterprise': [
+    {
+      id: 'monorepo',
+      name: 'Monorepo',
+      icon: '📦',
+      structure: 'my-monorepo/',
+      tip: 'Organize multiple projects in a single repository using tools like Nx or Turborepo.',
+      boilerplate: {
+        'nx.json': `{ "extends": "nx/presets/npm.json" }`,
+        'apps/api/src/main.ts': `// API service`,
+        'apps/web/src/main.ts': `// Web app`,
+      }
+    },
+    {
+      id: 'micro-frontends',
+      name: 'Micro-Frontends',
+      icon: '🧩',
+      structure: 'my-micro-frontend-app/',
+      tip: 'Build a modular front-end architecture where independent teams can work on different parts of the application.',
+      boilerplate: {
+        'host-app/package.json': `{ "name": "host-app", "dependencies": {} }`,
+        'remote-app/package.json': `{ "name": "remote-app", "dependencies": {} }`,
+      }
+    },
+    {
+      id: 'orchestration',
+      name: 'Multi-service Orchestration',
+      icon: '⚙️',
+      structure: 'my-orchestration-app/',
+      tip: 'Use tools like Docker Compose or Kubernetes to manage multiple interconnected services.',
+      boilerplate: {
+        'docker-compose.yml': `version: '3.8'\nservices:\n  service1:\n    build: ./service1\n  service2:\n    build: ./service2`,
+      }
+    },
+    {
+      id: 'design-system',
+      name: 'Design System',
+      icon: '🎨',
+      structure: 'my-design-system/',
+      tip: 'A central source of truth for design tokens and UI components, documented with Storybook.',
+      boilerplate: {
+        '.storybook/main.js': `module.exports = { stories: ['../src/**/*.stories.js'] }`,
+        'src/components/Button.jsx': `const Button = () => <button>Click me</button>;`,
+      }
+    },
+  ],
+  'mobile-desktop': [
+    {
+      id: 'react-native',
+      name: 'React Native',
+      icon: '📱',
+      structure: 'my-rn-app/',
+      tip: 'Build native mobile apps for iOS and Android using React.',
+      boilerplate: {
+        'package.json': `{ "name": "react-native-app", "dependencies": { "react-native": "^0.72.0" } }`,
+        'App.js': `import { Text, View } from 'react-native';\nexport default function App() { return (<View><Text>Hello, Mobile!</Text></View>); }`,
+      }
+    },
+    {
+      id: 'flutter',
+      name: 'Flutter',
+      icon: '🐦',
+      structure: 'my-flutter-app/',
+      tip: 'Build natively compiled apps for mobile, web, and desktop from a single codebase.',
+      boilerplate: {
+        'pubspec.yaml': `name: my_flutter_app\ndependencies:\n  flutter:\n    sdk: flutter`,
+        'lib/main.dart': `import 'package:flutter/material.dart';\nvoid main() => runApp(const MyApp());`,
+      }
+    },
+    {
+      id: 'electron',
+      name: 'Electron',
+      icon: '🖥️',
+      structure: 'my-electron-app/',
+      tip: 'Create cross-platform desktop applications with JavaScript, HTML, and CSS.',
+      boilerplate: {
+        'package.json': `{ "name": "electron-app", "dependencies": { "electron": "^28.0.0" } }`,
+        'main.js': `const { app, BrowserWindow } = require('electron');\nconst createWindow = () => { new BrowserWindow(); };\napp.whenReady().then(() => { createWindow(); });`,
+      }
+    },
+    {
+      id: 'tauri',
+      name: 'Tauri',
+      icon: '🦀🖥️',
+      structure: 'my-tauri-app/',
+      tip: 'A Rust-based alternative to Electron for building smaller, more secure desktop apps.',
+      boilerplate: {
+        'src/main.rs': `fn main() { tauri::Builder::default().run(tauri::generate_context!()).expect("error while running tauri application"); }`,
+      }
+    },
+  ],
 };
