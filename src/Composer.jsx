@@ -4,6 +4,7 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { getAuth, signInWithCustomToken, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signInAnonymously } from 'firebase/auth';
 import PropTypes from 'prop-types';
+import FileTree from './FileTree.jsx';
 
 // Data for all project cards, including new Firebase-specific combinations
 const projectData = {
@@ -44,7 +45,7 @@ const projectData = {
     { 
       id: 'svelte', 
       name: 'SvelteKit', 
-      icon: '�', 
+      icon: '', 
       structure: 'sveltekit-app/', 
       tip: 'SvelteKit’s file-based routing means creating a file in src/routes/ automatically creates a page.',
       boilerplate: {
@@ -228,6 +229,8 @@ function HowToUseModal({ isOpen, onClose }) {
 }
 
 // Main App Component
+const LOCAL_STORAGE_KEY = 'project-composer-workspace';
+
 export default function App() {
   const [selectedCategory, setSelectedCategory] = useState('frontend');
   const [workspaceProjects, setWorkspaceProjects] = useState([]);
@@ -245,6 +248,7 @@ export default function App() {
   const [isCSDMEnabled, setIsCSDMEnabled] = useState(false);
   const [integrationType, setIntegrationType] = useState('standalone');
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [collapseState, setCollapseState] = useState({});
 
   // Initialize Firebase and set up auth listener
 // Inside your Composer.jsx file
@@ -252,56 +256,53 @@ export default function App() {
 // Inside your Composer.jsx file
 
   useEffect(() => {
-
-        // Only the auth state change listener and user-related state management remains
-
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-
-            if (currentUser) {
-
-                setUser(currentUser);
-
-                setUserId(currentUser.uid);
-
-                // loadProjects(db, currentUser.uid); // Pass 'db' if needed
-
-            } else {
-
-                // This logic might be better handled in a global auth context or hook
-
-                // if it's truly meant to sign in all unauthenticated users
-
-                // For now, keep it if it's specific to Composer's initial state
-
-                try {
-
-                    const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-                    if (token) {
-
-                        await signInWithCustomToken(auth, token);
-
-                    } else {
-
-                        await signInAnonymously(auth);
-
-                    }
-
-                } catch (error) {
-
-                    console.error("Authentication failed:", error);
-
-                }
-
-            }
-
-            setIsLoading(false);
-
+    // Load projects from local storage on mount
+    const savedProjects = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (savedProjects) {
+      try {
+        const parsedProjects = JSON.parse(savedProjects);
+        setWorkspaceProjects(parsedProjects);
+        // Recalculate progress on load
+        parsedProjects.forEach(p => {
+          const { projectName, purpose, impact, firstStep } = p.config;
+          const filledFields = [projectName, purpose, impact, firstStep].filter(Boolean).length;
+          const newProgress = (filledFields / 4) * 100;
+          setProgress((prev) => ({ ...prev, [p.instanceId]: newProgress }));
         });
+      } catch (e) {
+        console.error("Failed to parse saved projects from local storage:", e);
+        // Clear corrupt data to avoid future errors
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+      }
+    }
+    
+    // Auth state change listener
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        setUserId(currentUser.uid);
+      } else {
+        try {
+          const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+          if (token) {
+            await signInWithCustomToken(auth, token);
+          } else {
+            await signInAnonymously(auth);
+          }
+        } catch (error) {
+          console.error("Authentication failed:", error);
+        }
+      }
+      setIsLoading(false);
+    });
 
-        return () => unsubscribe();
+    return () => unsubscribe();
+  }, []);
 
-    }, []); // Empty dependency array, runs once on mount
+  // Save projects to local storage whenever workspaceProjects changes
+  useEffect(() => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(workspaceProjects));
+  }, [workspaceProjects]);
   
   // Function to sign in with Google
   const signInWithGoogle = async () => {
@@ -634,37 +635,92 @@ ${csdmSection}
     }
   };
 
-  const fileTree = (project) => {
-    const { projectName, language, testingFramework } = project.config;
-    const isTs = language === 'typescript';
-    const ext = isTs ? 'ts' : 'js';
-    const testExt = testingFramework === 'jest' ? 'test.js' : 'spec.js';
-    let tree = `
-${projectName}/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   ├── hooks/
-│   ├── utils/
-│   ├── App.${isTs ? 'tsx' : 'jsx'}
-│   └── main.${ext}
-├── public/
-├── package.json
-└── README.md
-    `;
-    if (testingFramework !== 'none') {
-      tree += `\n├── tests/\n│   └── App.${testExt}`;
-    }
-    return tree;
-  };
+  // Updated function to generate a structured tree object
+  const generateStructuredFileTree = (project) => {
+    if (!project) return [];
+    const { boilerplate, structure } = project;
+    const projectRoot = {
+      name: project.config.projectName || project.structure.split('/')[0],
+      type: 'folder',
+      children: [],
+    };
 
-  const [collapseState, setCollapseState] = useState({});
+    // A helper function to find or create folders recursively
+    const findOrCreateFolder = (root, pathParts) => {
+      let currentFolder = root;
+      for (const part of pathParts) {
+        if (part === '') continue;
+        let nextFolder = currentFolder.children.find(child => child.name === part && child.type === 'folder');
+        if (!nextFolder) {
+          nextFolder = { name: part, type: 'folder', children: [] };
+          currentFolder.children.push(nextFolder);
+        }
+        currentFolder = nextFolder;
+      }
+      return currentFolder;
+    };
+
+    // Add files from boilerplate
+    for (const filePath in boilerplate) {
+      const pathParts = filePath.split('/');
+      const fileName = pathParts.pop();
+      const folderPath = pathParts;
+      const folder = findOrCreateFolder(projectRoot, folderPath);
+      folder.children.push({
+        name: fileName,
+        type: 'file',
+        content: boilerplate[filePath]
+      });
+    }
+
+    // Add generic files and folders based on project type
+    const isReact = project.id === 'react' || project.id === 'netlify-react';
+    if (isReact) {
+        const { projectName, language, testingFramework } = project.config;
+        const isTs = language === 'typescript';
+        const ext = isTs ? 'ts' : 'js';
+        const testExt = testingFramework === 'jest' ? 'test.js' : 'spec.js';
+        
+        // Add additional common folders for React projects
+        const srcFolder = findOrCreateFolder(projectRoot, ['src']);
+        const componentsFolder = findOrCreateFolder(srcFolder, ['components']);
+        const pagesFolder = findOrCreateFolder(srcFolder, ['pages']);
+        const hooksFolder = findOrCreateFolder(srcFolder, ['hooks']);
+        const utilsFolder = findOrCreateFolder(srcFolder, ['utils']);
+
+        // Add boilerplate content for these files
+        srcFolder.children.push({ name: `App.${isTs ? 'tsx' : 'jsx'}`, type: 'file', content: `import React from 'react';\n\nfunction App() { return <h1>Hello, ${projectName}!</h1>; }` });
+        srcFolder.children.push({ name: `main.${ext}`, type: 'file', content: `import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport App from './App';\n\nReactDOM.createRoot(document.getElementById('root')).render(<React.StrictMode><App /></React.StrictMode>);` });
+
+        // Add public folder and file
+        const publicFolder = findOrCreateFolder(projectRoot, ['public']);
+        publicFolder.children.push({ name: 'index.html', type: 'file', content: `<!DOCTYPE html>\n<html lang="en">\n<body>\n<div id="root"></div>\n</body>\n</html>` });
+
+        // Add root files
+        projectRoot.children.push({ name: 'README.md', type: 'file', content: `# ${projectName}` });
+
+        if (testingFramework !== 'none') {
+            const testsFolder = findOrCreateFolder(projectRoot, ['tests']);
+            testsFolder.children.push({ name: `App.${testExt}`, type: 'file', content: `import { render, screen } from '@testing-library/react';\nimport App from '../src/App';\n\ntest('renders hello message', () => {\n  render(<App />);\n  expect(screen.getByText(/hello/i)).toBeInTheDocument();\n});` });
+        }
+    }
+
+    return projectRoot.children;
+};
+
   const toggleCollapse = (id) => {
     setCollapseState(prevState => ({
       ...prevState,
       [id]: !prevState[id]
     }));
   };
+  
+  const onSelectFile = (file) => {
+    // Optionally handle file selection, e.g., show in a preview pane
+    console.log('Selected file:', file.name);
+  };
+
+  const fileTreeData = selectedProject ? generateStructuredFileTree(selectedProject) : [];
 
   return (
     <div className={`flex flex-col h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'} font-inter`}>
@@ -1088,6 +1144,18 @@ ${projectName}/
                       </select>
                     </label>
                   </div>
+                )}
+              </div>
+              <div className="mt-6">
+                <h4 className={`text-lg font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-black'}`}>File Tree</h4>
+                {selectedProject && (
+                  <FileTree 
+                    data={fileTreeData} 
+                    onSelectFile={() => {}} 
+                    isDarkMode={isDarkMode}
+                    collapseState={collapseState}
+                    toggleCollapse={toggleCollapse}
+                  />
                 )}
               </div>
             </div>
