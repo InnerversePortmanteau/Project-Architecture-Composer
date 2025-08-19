@@ -152,3 +152,4 @@ const projectData = {
     },
   ],
 };
+export const projectData = { ... };

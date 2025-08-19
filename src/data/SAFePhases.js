@@ -8,3 +8,4 @@ const SAFePhases = [
   { id: 'execute', name: 'Execute', actions: ['Pre-PI planning', 'Mid-PI review', 'PI planning', 'Inspect & Adapt'], tip: 'Inspect and adapt, coach, and learn.' },
   { id: 'expand', name: 'Extend and Expand', actions: ['Bring in Lean portfolio management', 'Offer leadership refreshers'], tip: 'Nurture and grow the Agile culture by expanding into new areas.' },
 ];
+export const SAFePhases = [ ... ];
