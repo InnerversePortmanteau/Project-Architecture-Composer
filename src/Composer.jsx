@@ -245,59 +245,57 @@ export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
 
   // Initialize Firebase and set up auth listener
-  useEffect(() => {
+// Inside your Composer.jsx file
+
+useEffect(() => {
     try {
-      // The Firebase config should be provided by the environment
-      const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        // Construct the Firebase config from environment variables
+        const firebaseConfig = {
+            apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+            authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+            projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+            storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+            messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+            appId: import.meta.env.VITE_FIREBASE_APP_ID,
+        };
 
-      // The following is an example of what the firebaseConfig object looks like.
-      // In a real project, this would be loaded from environment variables during the build process.
-      // const firebaseConfig = {
-      //   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-      //   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-      //   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-      //   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-      //   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-      //   appId: import.meta.env.VITE_FIREBASE_APP_ID,
-      // };
-
-      if (Object.keys(firebaseConfig).length === 0) {
-        console.error("Firebase config is missing.");
-        setIsLoading(false);
-        return;
-      }
-      const app = initializeApp(firebaseConfig);
-      const firestoreDb = getFirestore(app);
-      const firebaseAuth = getAuth(app);
-      setDb(firestoreDb);
-      setAuth(firebaseAuth);
-
-      const unsubscribe = onAuthStateChanged(firebaseAuth, async (currentUser) => {
-        if (currentUser) {
-          setUser(currentUser);
-          setUserId(currentUser.uid);
-          // Load projects once user is authenticated
-          loadProjects(firestoreDb, currentUser.uid);
-        } else {
-          try {
-            const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-            if (token) {
-              await signInWithCustomToken(firebaseAuth, token);
-            } else {
-              await signInAnonymously(firebaseAuth);
-            }
-          } catch (error) {
-            console.error("Authentication failed:", error);
-          }
+        if (!firebaseConfig.apiKey) {
+            console.error("Firebase config is missing or invalid.");
+            setIsLoading(false);
+            return;
         }
-        setIsLoading(false);
-      });
-      return () => unsubscribe();
+
+        const app = initializeApp(firebaseConfig);
+        const firestoreDb = getFirestore(app);
+        const firebaseAuth = getAuth(app);
+        setDb(firestoreDb);
+        setAuth(firebaseAuth);
+
+        const unsubscribe = onAuthStateChanged(firebaseAuth, async (currentUser) => {
+            if (currentUser) {
+                setUser(currentUser);
+                setUserId(currentUser.uid);
+                loadProjects(firestoreDb, currentUser.uid);
+            } else {
+                try {
+                    const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                    if (token) {
+                        await signInWithCustomToken(firebaseAuth, token);
+                    } else {
+                        await signInAnonymously(firebaseAuth);
+                    }
+                } catch (error) {
+                    console.error("Authentication failed:", error);
+                }
+            }
+            setIsLoading(false);
+        });
+        return () => unsubscribe();
     } catch (error) {
-      console.error("Firebase initialization error:", error);
-      setIsLoading(false);
+        console.error("Firebase initialization error:", error);
+        setIsLoading(false);
     }
-  }, []);
+}, []);
 
   // Function to sign in with Google
   const signInWithGoogle = async () => {
