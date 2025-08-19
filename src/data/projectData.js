@@ -1,5 +1,4 @@
-// Data for all project cards, including new Firebase-specific combinations
-const projectData = {
+export const projectData = {
   frontend: [
     { 
       id: 'react', 
@@ -152,4 +151,3 @@ const projectData = {
     },
   ],
 };
-export const projectData = { ... };
