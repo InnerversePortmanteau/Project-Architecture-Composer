@@ -247,6 +247,8 @@ export default function App() {
   // Initialize Firebase and set up auth listener
 // Inside your Composer.jsx file
 
+// Inside your Composer.jsx file
+
 useEffect(() => {
     try {
         // Construct the Firebase config from environment variables
