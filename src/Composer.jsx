@@ -43,7 +43,7 @@ const projectData = {
     { 
       id: 'svelte', 
       name: 'SvelteKit', 
-      icon: '🔥', 
+      icon: '�', 
       structure: 'sveltekit-app/', 
       tip: 'SvelteKit’s file-based routing means creating a file in src/routes/ automatically creates a page.',
       boilerplate: {
@@ -103,7 +103,7 @@ const projectData = {
     { 
       id: 'postgresql', 
       name: 'PostgreSQL', 
-      icon: '�', 
+      icon: '🐘', 
       structure: 'db-project/', 
       tip: 'Keep your database schema in version control with migrations.',
       boilerplate: {
@@ -247,7 +247,20 @@ export default function App() {
   // Initialize Firebase and set up auth listener
   useEffect(() => {
     try {
+      // The Firebase config should be provided by the environment
       const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+      // The following is an example of what the firebaseConfig object looks like.
+      // In a real project, this would be loaded from environment variables during the build process.
+      // const firebaseConfig = {
+      //   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+      //   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+      //   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+      //   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+      //   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+      //   appId: import.meta.env.VITE_FIREBASE_APP_ID,
+      // };
+
       if (Object.keys(firebaseConfig).length === 0) {
         console.error("Firebase config is missing.");
         setIsLoading(false);
@@ -713,7 +726,7 @@ ${projectName}/
                         <select 
                             value={integrationType} 
                             onChange={(e) => setIntegrationType(e.target.value)}
-                            className={`mt-1 p-2 rounded-md ${isDarkMode ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-400 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                            className={`mt-1 p-2 rounded-md border ${isDarkMode ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-400 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
                         >
                             <option value="standalone">Standalone</option>
                             <option value="realtime">Real-time Integration</option>
@@ -747,7 +760,21 @@ ${projectName}/
         <div className={`flex-grow p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} overflow-y-auto`}>
           <div className="flex justify-between items-center mb-4">
             <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-green-300' : 'text-green-600'}`}>Workspace</h2>
-            {userId && <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>User ID: <span className="font-mono">{userId}</span></p>}
+            {user && (
+              <div className="flex items-center space-x-2">
+                <img src={user.photoURL || 'https://placehold.co/40x40/555/FFF?text=U'} alt="User profile" className="w-8 h-8 rounded-full" />
+                <span className="text-sm">Hello, {user.displayName || 'User'}!</span>
+                <span className="font-mono text-xs text-gray-500">{user.uid}</span>
+              </div>
+            )}
+            {!user && (
+              <button
+                onClick={signInWithGoogle}
+                className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-md transition-colors duration-200"
+              >
+                Sign in with Google
+              </button>
+            )}
           </div>
           {isLoading ? (
             <div className={`flex items-center justify-center h-full ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
